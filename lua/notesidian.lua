@@ -109,6 +109,29 @@ function M.create_todo_list()
 		vim.cmd("edit " .. target_file)
 	else
 		vim.notify("Can't create todo list: " .. target_file, vim.log.levels.ERROR)
+---@doc
+--- Toggles the checkbox state on the current line
+--- The checkbox cycles through three states:
+--- [ ] (unchecked) -> [-] (in progress) -> [x] (completed) -> [ ] (unchecked)
+--- Works with Markdown checkbox syntax: "- [ ]", "* [ ]" or "+ [ ]"
+function M.toggle_checkbox()
+	local line = vim.fn.getline(".")
+	local cursor_line = vim.fn.line(".")
+	local checkbox_pattern = "^%s*[-*+]%s*%[([%s%-%*xX])%]"
+	local _, _, state = string.find(line, checkbox_pattern)
+	local new_line
+	if state then
+		if state == " " then
+			new_line = string.gsub(line, "%[%s%]", "[-]", 1)
+		elseif state == "-" then
+			new_line = string.gsub(line, "%[%-]", "[x]", 1)
+		else
+			new_line = string.gsub(line, "%[[xX%*]%]", "[ ]", 1)
+		end
+		vim.api.nvim_buf_set_lines(0, cursor_line - 1, cursor_line, false, { new_line })
+		local cursor_pos = vim.api.nvim_win_get_cursor(0)
+		vim.api.nvim_win_set_cursor(0, cursor_pos)
 	end
 end
+
 return M
