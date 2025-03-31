@@ -1,114 +1,116 @@
 local M = {}
+
+local utils = require("utils")
+
+---@class NotesidianConfig
+---@field notes_root string Root directory for all notes
+---@field daily_notes_path string Path to daily notes relative to notes_root
+---@field template_path string Path to templates relative to notes_root
+---@field date_format string Format string for dates
+---@field todo_list_prefix string Title prefix for todo lists
+---@field todo_template string Filename of todo list template
+---@field note_template string Filename of note template
+
+-- Default configuration
+---@class NotesidianConfig
 local _config = {
 	notes_root = "",
 	daily_notes_path = "Notes/Dailies",
 	template_path = "Templates",
 	date_format = "%Y-%m-%d",
-	todo_scope = "Personal",
+	todo_list_prefix = "Personal",
 	todo_template = "TodoList.md",
 	note_template = "Note.md",
 }
 
+---@param template_path string Path to the template file
+---@param target_path string Path where the new file should be created
+---@param replacements table<string, string> Table of template replacements
+---@return boolean success Whether the operation was successful
+local function create_file_from_template(template_path, target_path, replacements)
+	if not template_path then
+		vim.notify("Template path not specified", vim.log.levels.ERROR)
+		return false
+	end
+
+	local content = utils.read_file(template_path)
+	if not content then
+		return false
+	end
+
+	for pattern, replacement in pairs(replacements) do
+		content = string.gsub(content, pattern, replacement)
+	end
+
+	if utils.file_exists(target_path) then
+		utils.open_file_in_editor(target_path)
+		return true
+	end
+
+	local parent_dir = vim.fn.fnamemodify(target_path, ":h")
+	if not utils.ensure_directory_exists(parent_dir) then
+		return false
+	end
+
+	if not utils.write_file(target_path, content) then
+		return false
+	end
+
+	utils.open_file_in_editor(target_path)
+	return true
+end
+
+---@param opts table|nil User configuration options
 function M.setup(opts)
+	-- Merge user config with defaults
 	_config = vim.tbl_deep_extend("force", _config, opts or {})
+
+	-- Expand all paths
 	_config.notes_root = vim.fn.expand(_config.notes_root)
+
+	-- Join paths with notes_root
 	_config.template_path = vim.fs.joinpath(_config.notes_root, _config.template_path)
 	_config.daily_notes_path = vim.fs.joinpath(_config.notes_root, _config.daily_notes_path)
+
+	-- Set template file paths
 	_config.note_template_file = vim.fs.joinpath(_config.template_path, _config.note_template)
 	_config.todo_template_file = vim.fs.joinpath(_config.template_path, _config.todo_template)
 end
 
-local new_note_from_template = function(template)
-	if not template then
-		return
-	end
-
-	local template_file = template
-
-	local file_content = ""
-	local f = io.open(template_file, "r")
-	if f then
-		file_content = f:read("*all")
-		f:close()
-	else
-		vim.notify("Template file inaccessible: " .. template_file, vim.log.levels.ERROR)
-		return
-	end
-
+---@doc
+--- Creates a daily note file using the configured template
+--- The note will be created in the daily notes directory with the current date
+--- as filename using the configured date format.
+function M.create_daily_note()
 	local current_date = os.date(_config.date_format)
-
-	file_content = string.gsub(file_content, "{{date}}", current_date)
-
-	local target_filename = os.date(_config.date_format) .. ".md"
+	local target_filename = current_date .. ".md"
 	local target_file = vim.fs.joinpath(_config.daily_notes_path, target_filename)
 
-	local file_exists = vim.loop.fs_stat(target_file) ~= nil
+	local replacements = {
+		["{{date}}"] = current_date,
+	}
 
-	if file_exists then
-		vim.cmd("edit " .. target_file)
-		return
-	end
-
-	local daily_dir_stat = vim.loop.fs_stat(_config.daily_notes_path)
-	if not daily_dir_stat then
-		vim.fn.mkdir(_config.daily_notes_path, "p")
-	end
-
-	local new_file = io.open(target_file, "w")
-	if new_file then
-		new_file:write(file_content)
-		new_file:close()
-
-		vim.cmd("edit " .. target_file)
-	else
-		vim.notify("Can't create new note: " .. target_file, vim.log.levels.ERROR)
-	end
+	create_file_from_template(_config.note_template_file, target_file, replacements)
 end
 
-function M.create_daily_note()
-	new_note_from_template(_config.note_template_file)
-end
-
+---@doc
+--- Creates a todo list file using the configured template
+--- The file will be created in the notes root directory with the configured
+--- todo_list_title as part of the filename. The template will have date and
+--- title placeholders replaced with current values.
 function M.create_todo_list()
-	if not _config.todo_template_file then
-		return
-	end
-
-	local template_file = _config.todo_template_file
-
-	local file_content = ""
-	local f = io.open(template_file, "r")
-	if f then
-		file_content = f:read("*all")
-		f:close()
-	else
-		vim.notify("Template file inaccessible: " .. template_file, vim.log.levels.ERROR)
-		return
-	end
-
 	local current_date = os.date(_config.date_format)
-
-	file_content = string.gsub(file_content, "{{date}}", current_date)
-	file_content = string.gsub(file_content, "{{title}}", _config.todo_scope .. " Todo List")
-
-	local target_filename = _config.todo_scope .. " - TodoList.md"
+	local target_filename = _config.todo_list_prefix .. " - TodoList.md"
 	local target_file = vim.fs.joinpath(_config.notes_root, target_filename)
 
-	local file_exists = vim.loop.fs_stat(target_file) ~= nil
+	local replacements = {
+		["{{date}}"] = current_date,
+		["{{title}}"] = _config.todo_list_prefix .. " Todo List",
+	}
 
-	if file_exists then
-		vim.cmd("edit " .. target_file)
-		return
-	end
+	create_file_from_template(_config.todo_template_file, target_file, replacements)
+end
 
-	local new_file = io.open(target_file, "w")
-	if new_file then
-		new_file:write(file_content)
-		new_file:close()
-
-		vim.cmd("edit " .. target_file)
-	else
-		vim.notify("Can't create todo list: " .. target_file, vim.log.levels.ERROR)
 ---@doc
 --- Toggles the checkbox state on the current line
 --- The checkbox cycles through three states:
