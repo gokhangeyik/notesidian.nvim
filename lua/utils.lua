@@ -47,7 +47,7 @@ end
 ---@param file_path string Path to check
 ---@return boolean exists Whether the file exists
 function M.file_exists(file_path)
-	return vim.loop.fs_stat(file_path) ~= nil
+	return vim.uv.fs_stat(file_path) ~= nil
 end
 
 ---@param file_path string Path to the file to open in editor

@@ -10,6 +10,7 @@ local utils = require("utils")
 ---@field todo_list_prefix string Title prefix for todo lists
 ---@field todo_template string Filename of todo list template
 ---@field note_template string Filename of note template
+---@field snacks_picker boolean Enable or disable Snacks.picker
 
 -- Default configuration
 ---@class NotesidianConfig
@@ -21,6 +22,7 @@ local _config = {
 	todo_list_prefix = "Personal",
 	todo_template = "TodoList.md",
 	note_template = "Note.md",
+	snacks_picker = false,
 }
 
 ---@param template_path string Path to the template file
@@ -134,6 +136,93 @@ function M.toggle_checkbox()
 		local cursor_pos = vim.api.nvim_win_get_cursor(0)
 		vim.api.nvim_win_set_cursor(0, cursor_pos)
 	end
+end
+
+---@doc
+--- Lists all markdown files in the notes_root directory and its subdirectories
+--- Files are displayed without the .md extension and with paths relative to notes_root
+--- When a file is selected, it is opened in the current editor
+function M.find_notes()
+	if _config.notes_root == "" then
+		vim.notify("Notes root directory not configured", vim.log.levels.ERROR)
+		return
+	end
+
+	local pattern = vim.fs.joinpath(_config.notes_root, "**", "*.md")
+	local files = vim.fn.glob(pattern, false, true)
+
+	if #files == 0 then
+		vim.notify("No markdown files found in " .. _config.notes_root, vim.log.levels.WARN)
+		return
+	end
+
+	local display_files = {}
+	local file_map = {}
+	for _, file_path in ipairs(files) do
+		-- Use vim.fs.normalize to handle path separators correctly
+		local normalized_root = vim.fs.normalize(_config.notes_root)
+		local normalized_path = vim.fs.normalize(file_path)
+
+		-- Ensure the path starts with the root plus a separator
+		local root_with_sep = normalized_root
+		if string.sub(root_with_sep, -1) ~= "/" then
+			root_with_sep = root_with_sep .. "/"
+		end
+
+		-- Get path relative to notes_root
+		local rel_path
+		if vim.startswith(normalized_path, root_with_sep) then
+			rel_path = string.sub(normalized_path, #root_with_sep + 1)
+		else
+			rel_path = string.sub(normalized_path, #normalized_root + 2)
+		end
+
+		local display_path = rel_path:gsub("%.md$", "")
+		table.insert(display_files, display_path)
+		file_map[display_path] = file_path
+	end
+
+	table.sort(display_files)
+
+	if _config.snacks_picker then
+		local has_snacks, snacks = pcall(require, "snacks")
+		if has_snacks then
+			local items = {}
+			for i, display_path in ipairs(display_files) do
+				table.insert(items, {
+					idx = i,
+					text = display_path,
+					file = file_map[display_path],
+				})
+			end
+
+			snacks.picker.pick({
+				source = "Notes",
+				prompt = "Select a note to open:",
+				items = items,
+				on_select = function(item)
+					if item and item.path then
+						utils.open_file_in_editor(item.path)
+					end
+				end,
+			})
+			return
+		else
+			vim.notify("Snacks picker is enabled but the plugin is not installed", vim.log.levels.WARN)
+		end
+	end
+
+	-- Fallback to vim.ui.select if Snacks is not available or disabled
+	vim.ui.select(display_files, {
+		prompt = "Select a note to open:",
+		format_item = function(item)
+			return item
+		end,
+	}, function(selected)
+		if selected then
+			utils.open_file_in_editor(file_map[selected])
+		end
+	end)
 end
 
 return M
