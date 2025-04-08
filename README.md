@@ -31,6 +31,7 @@ date_format = "%Y-%m-%d", -- Date format to replace {{date}} pattern in template
 todo_list_prefix = "Personal", -- Prefix for todo list title and filename, replaces {{title}} string
 todo_template = "TodoList.md", -- Todo list template
 note_template = "Note.md", -- Daily note template
+snacks_picker = false, --- Enable or disable Snacks picker support
 ```
 
 At minimum, `notes_root` must be defined. Templates should also be created. You can find template examples in the sections below.
@@ -51,6 +52,10 @@ end, { desc = "Create or edit Todo List" })
 map("n", "<leader>oc", function()
   require("notesidian").toggle_checkbox()
 end, { desc = "Toggle Todo List Checkbox" })
+
+map("n", "<leader>of", function()
+  require("notesidian").find_notes()
+end, { desc = "Search Notes" })
 ```
 
 ## Note and Todolist Templates
