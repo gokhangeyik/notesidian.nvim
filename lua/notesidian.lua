@@ -81,18 +81,28 @@ end
 
 ---@doc
 --- Creates a daily note file using the configured template
---- The note will be created in the daily notes directory with the current date
+--- The note will be created in the daily notes directory with the specified date
 --- as filename using the configured date format.
-function M.create_daily_note()
-	local current_date = os.date(_config.date_format)
-	local target_filename = current_date .. ".md"
+---@param day_offset number|nil Number of days to offset from current date (negative for past, positive for future, default: 0)
+function M.create_daily_note(day_offset)
+	-- Use default day_offset of 0 (today) if not provided
+	day_offset = day_offset or 0
+
+	-- Calculate the target timestamp by adding the day offset in seconds
+	local target_timestamp = os.time() + (day_offset * 86400) -- 86400 seconds in a day
+
+	-- Format the date for the target day
+	local target_date = os.date(_config.date_format, target_timestamp)
+	local target_filename = target_date .. ".md"
 	local target_file = vim.fs.joinpath(_config.daily_notes_path, target_filename)
 
 	local replacements = {
-		["{{date}}"] = current_date,
+		["{{date}}"] = target_date,
 	}
 
 	create_file_from_template(_config.note_template_file, target_file, replacements)
+
+	return target_file -- Return the created file path for possible further use
 end
 
 ---@doc
