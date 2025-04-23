@@ -1,9 +1,18 @@
 # Notesidian
 
-A very simple Neovim plugin that I developed just for myself.
+A very simple - *maybe not that simple anymore* - Neovim plugin that I developed just for myself.
 It helps me create daily notes or to-do lists using Obsidian templates and edit them from within Neovim.
 
 Feel free to use it.
+
+# Features
+ - Creates a Todo list using the template you can find below or one you create yourself
+ - Enables you to create daily notes. You can also create and edit notes for today, yesterday, and tomorrow.
+   - Check the keymaps below, with the day offset feature you have the flexibility to create notes for any specific day
+ - With Search, you can search for your notes throughout your entire Obsidian vault and edit them.
+ - Provides 3-stage checkbox management for Todo lists (Todo, In progress, Done)
+ - Does all this completely independent of Obsidian. In other words, you don't need to install Obsidian for this plugin.
+
 
 ## Installation
 I'll only be sharing instructions for the Lazy package manager. I'm sure the snippet below will also serve as a guide for other package managers.
@@ -13,10 +22,10 @@ I'll only be sharing instructions for the Lazy package manager. I'm sure the sni
   "gokhangeyik/notesidian.nvim",
   lazy = true,
   dependencies = {
+    --- pick your favorite markdown plugin, this is my favorite
     "MeanderingProgrammer/render-markdown.nvim",
   }
-  opts = {
-  },
+  opts = {},
 }
 ```
 
@@ -43,7 +52,15 @@ Since the plugin doesn't define any keymaps, you can choose ones that suit you. 
 ```lua
 map("n", "<leader>od", function()
   require("notesidian").create_daily_note()
-end, { desc = "Create or edit daily note" })
+end, { desc = "Create or edit daily note (Today)" })
+
+map("n", "<leader>oy", function()
+  require("notesidian").create_daily_note(-1)
+end, { desc = "Create or edit daily note (Yesterday)" })
+
+map("n", "<leader>ot", function()
+  require("notesidian").create_daily_note(1)
+end, { desc = "Create or edit daily note (Tomorrow)" })
 
 map("n", "<leader>ol", function()
   require("notesidian").create_todo_list()
@@ -51,7 +68,7 @@ end, { desc = "Create or edit Todo List" })
 
 map("n", "<leader>oc", function()
   require("notesidian").toggle_checkbox()
-end, { desc = "Toggle Todo List Checkbox" })
+end, { desc = "Toggle Checkbox" })
 
 map("n", "<leader>of", function()
   require("notesidian").find_notes()
