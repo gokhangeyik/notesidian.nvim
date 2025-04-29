@@ -12,6 +12,7 @@ Feel free to use it.
  - With Search, you can search for your notes throughout your entire Obsidian vault and edit them.
  - Provides 3-stage checkbox management for Todo lists (Todo, In progress, Done)
  - Does all this completely independent of Obsidian. In other words, you don't need to install Obsidian for this plugin.
+ - Notes and Todo lists open in a floating window by default
 
 
 ## Installation
@@ -40,7 +41,8 @@ date_format = "%Y-%m-%d", -- Date format to replace {{date}} pattern in template
 todo_list_prefix = "Personal", -- Prefix for todo list title and filename, replaces {{title}} string
 todo_template = "TodoList.md", -- Todo list template
 note_template = "Note.md", -- Daily note template
-snacks_picker = false, --- Enable or disable Snacks picker support
+snacks_picker = false, -- Enable or disable Snacks picker support
+win_style = "float", -- float or anything else
 ```
 
 At minimum, `notes_root` must be defined. Templates should also be created. You can find template examples in the sections below.
