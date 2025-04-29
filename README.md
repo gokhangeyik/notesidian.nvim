@@ -5,7 +5,7 @@ It helps me create daily notes or to-do lists using Obsidian templates and edit 
 
 Feel free to use it.
 
-# Features
+## Features
  - Creates a Todo list using the template you can find below or one you create yourself
  - Enables you to create daily notes. You can also create and edit notes for today, yesterday, and tomorrow.
    - Check the keymaps below, with the day offset feature you have the flexibility to create notes for any specific day
@@ -14,6 +14,11 @@ Feel free to use it.
  - Does all this completely independent of Obsidian. In other words, you don't need to install Obsidian for this plugin.
  - Notes and Todo lists open in a floating window by default
 
+### Daily Notes
+![daily](https://github.com/user-attachments/assets/c9dfccd8-7faa-4287-8427-2540268557b7)
+
+### Todo List
+![todo](https://github.com/user-attachments/assets/be6e57e6-72a9-4660-b20f-acf6261cbcc0)
 
 ## Installation
 I'll only be sharing instructions for the Lazy package manager. I'm sure the snippet below will also serve as a guide for other package managers.
