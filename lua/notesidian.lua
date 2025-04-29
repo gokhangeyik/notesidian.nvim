@@ -11,6 +11,7 @@ local utils = require("utils")
 ---@field todo_template string Filename of todo list template
 ---@field note_template string Filename of note template
 ---@field snacks_picker boolean Enable or disable Snacks.picker
+---@field win_style string
 
 -- Default configuration
 ---@class NotesidianConfig
@@ -23,6 +24,7 @@ local _config = {
 	todo_template = "TodoList.md",
 	note_template = "Note.md",
 	snacks_picker = false,
+	win_style = "float",
 }
 
 ---@param template_path string Path to the template file
@@ -45,7 +47,11 @@ local function create_file_from_template(template_path, target_path, replacement
 	end
 
 	if utils.file_exists(target_path) then
-		utils.open_file_in_editor(target_path)
+		if _config.win_style == "float" then
+			utils.open_file_in_float(target_path)
+		else
+			utils.open_file_in_editor(target_path)
+		end
 		return true
 	end
 
@@ -212,7 +218,11 @@ function M.find_notes()
 				items = items,
 				on_select = function(item)
 					if item and item.path then
-						utils.open_file_in_editor(item.path)
+						if _config.win_style == "float" then
+							utils.open_file_in_float(item.path)
+						else
+							utils.open_file_in_editor(item.path)
+						end
 					end
 				end,
 			})
@@ -230,7 +240,11 @@ function M.find_notes()
 		end,
 	}, function(selected)
 		if selected then
-			utils.open_file_in_editor(file_map[selected])
+			if _config.win_style == "float" then
+				utils.open_file_in_float(file_map[selected])
+			else
+				utils.open_file_in_editor(file_map[selected])
+			end
 		end
 	end)
 end

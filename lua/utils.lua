@@ -55,4 +55,44 @@ function M.open_file_in_editor(file_path)
 	vim.cmd("edit " .. vim.fn.fnameescape(file_path))
 end
 
+---@param file_path string Path to the file to open in editor
+function M.open_file_in_float(file_path)
+	local buf = vim.fn.bufadd(file_path)
+	vim.fn.bufload(buf)
+
+	local width = vim.o.columns
+	local height = vim.o.lines
+
+	local win_width = math.floor(width * 0.9) -- 90% of screen width
+	local win_height = math.floor(height * 0.8) -- 80% of screen height
+
+	local row = math.floor((height - win_height) / 2)
+	local col = math.floor((width - win_width) / 2)
+
+	local opts = {
+		relative = "editor",
+		width = win_width,
+		height = win_height,
+		row = row,
+		col = col,
+		style = "minimal",
+		border = "rounded",
+		title = "Notesidian - " .. vim.fn.fnamemodify(file_path, ":t"),
+		title_pos = "center",
+	}
+	local win = vim.api.nvim_open_win(buf, true, opts)
+	vim.api.nvim_set_current_win(win)
+
+	vim.api.nvim_buf_set_keymap(buf, "n", "q", "<cmd>close<CR>", {
+		noremap = true,
+		silent = true,
+		desc = "Close Notesidian Window",
+	})
+	vim.api.nvim_buf_set_keymap(buf, "n", "<esc>", "<cmd>close<CR>", {
+		noremap = true,
+		silent = true,
+		desc = "Close Notesidian Window",
+	})
+end
+
 return M
