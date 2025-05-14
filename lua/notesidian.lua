@@ -134,13 +134,16 @@ end
 --- The checkbox cycles through three states:
 --- [ ] (unchecked) -> [-] (in progress) -> [x] (completed) -> [ ] (unchecked)
 --- Works with Markdown checkbox syntax: "- [ ]", "* [ ]" or "+ [ ]"
+--- If no checkbox exists on the line, a new unchecked checkbox will be added at the beginning
 function M.toggle_checkbox()
 	local line = vim.fn.getline(".")
 	local cursor_line = vim.fn.line(".")
 	local checkbox_pattern = "^%s*[-*+]%s*%[([%s%-%*xX])%]"
 	local _, _, state = string.find(line, checkbox_pattern)
 	local new_line
+
 	if state then
+		-- Toggle existing checkbox
 		if state == " " then
 			new_line = string.gsub(line, "%[%s%]", "[-]", 1)
 		elseif state == "-" then
@@ -148,10 +151,14 @@ function M.toggle_checkbox()
 		else
 			new_line = string.gsub(line, "%[[xX%*]%]", "[ ]", 1)
 		end
-		vim.api.nvim_buf_set_lines(0, cursor_line - 1, cursor_line, false, { new_line })
-		local cursor_pos = vim.api.nvim_win_get_cursor(0)
-		vim.api.nvim_win_set_cursor(0, cursor_pos)
+	else
+		local trimmed_line = string.gsub(line, "^%s*", "")
+		new_line = "- [ ] " .. trimmed_line
 	end
+
+	vim.api.nvim_buf_set_lines(0, cursor_line - 1, cursor_line, false, { new_line })
+	local cursor_pos = vim.api.nvim_win_get_cursor(0)
+	vim.api.nvim_win_set_cursor(0, cursor_pos)
 end
 
 ---@doc
